@@ -29,7 +29,6 @@ public class TwitterClientController {
     List<Tweet> tweets = twitterStreamService.retrieveAndProcessTweets(searchString);
     model.addAttribute("tweets", tweets);
     model.addAttribute("searchString", searchString);
-    System.out.println("Controller called");
     return "tweets";
   }
 
