@@ -115,12 +115,12 @@ public class Authenticator {
     String providedPin = null;
     try {
       BufferedReader buffReader = new BufferedReader(new InputStreamReader(System.in));
-      System.out.println("Go to the following link in your browser:" + authorizeUrl.build());
-      System.out.println("Please enter the retrieved PIN:");
+      logger.info("Go to the following link in your browser:" + authorizeUrl.build());
+      logger.info("Please enter the retrieved PIN:");
       providedPin = buffReader.readLine();
     }
     catch (IOException exc){
-      System.out.println(exc);
+      logger.error(exc.getMessage());
     }
 
     if (providedPin == null) {

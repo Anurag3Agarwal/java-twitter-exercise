@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 
@@ -60,7 +59,8 @@ public class TwitterStreamServiceImpl implements TwitterStreamService {
   public List<Tweet> retrieveAndProcessTweets(String searchString) {
     HttpRequestFactory httpRequestFactory = authenticator.getAuthorizedHttpRequestFactory();
     try {
-      setMapOfTweetsSortedByUserChronologycally(retrieveAndParseTweetsFromTwitterStream(httpRequestFactory, searchString));
+      setMapOfTweetsSortedByUserChronologycally(
+          retrieveAndParseTweetsFromTwitterStream(httpRequestFactory, searchString));
     } catch (IOException e) {
       logger.error(e.getMessage());
     }
@@ -70,11 +70,13 @@ public class TwitterStreamServiceImpl implements TwitterStreamService {
   }
 
 
-  private List<Tweet> retrieveAndParseTweetsFromTwitterStream(HttpRequestFactory httpRequestFactory, String searchString) throws IOException {
-    logger.info("Entering retrieveAndParseTweetsFromTwitterStream...");
+  private List<Tweet> retrieveAndParseTweetsFromTwitterStream(HttpRequestFactory httpRequestFactory,
+      String searchString) throws IOException {
+    logger.debug("Entering retrieveAndParseTweetsFromTwitterStream...");
     List<Tweet> tweetList = new ArrayList<>();
     HttpRequest request = httpRequestFactory.buildGetRequest(
-        new GenericUrl(ApplicationConstant.ENDPOINT_STREAM_TWITTER.concat("?track=").concat(searchString)));
+        new GenericUrl(
+            ApplicationConstant.ENDPOINT_STREAM_TWITTER.concat("?track=").concat(searchString)));
     HttpResponse response = request.execute();
     InputStream in = response.getContent();
     ObjectMapper mapper = new ObjectMapper();
@@ -92,7 +94,7 @@ public class TwitterStreamServiceImpl implements TwitterStreamService {
       countTweets++;
       logger.info("Number of Input Tweets: " + countTweets);
     }
-    logger.info("Exiting retrieveAndParseTweetsFromTwitterStream!!");
+    logger.debug("Exiting retrieveAndParseTweetsFromTwitterStream!!");
     return tweetList;
   }
 
@@ -102,7 +104,7 @@ public class TwitterStreamServiceImpl implements TwitterStreamService {
    * @param tweetList Generated Tweet List.
    */
   private void setMapOfTweetsSortedByUserChronologycally(List<Tweet> tweetList) {
-    logger.info("Entering setMapOfTweetsSortedByUserChronologycally...");
+    logger.debug("Entering setMapOfTweetsSortedByUserChronologycally...");
     tweetByUser = tweetList.stream()
         .sorted(Comparator.nullsLast((p1, p2) -> p1.getAuthor().compareTo(p2.getAuthor())))
         .filter(p -> null != p.getAuthor().getUserId())
@@ -113,14 +115,18 @@ public class TwitterStreamServiceImpl implements TwitterStreamService {
       userTweetList.sort((p1, p2) -> p1.compareTo(p2));
     }
 
-    logger.info("Exiting setMapOfTweetsSortedByUserChronologycally!!");
+    logger.debug("Exiting setMapOfTweetsSortedByUserChronologycally!!");
   }
 
+  /**
+   * Method to print the output to the console
+   */
+
   private void printSortedTweets() {
-    logger.info("Entering printSortedTweets...");
+    logger.debug("Entering printSortedTweets...");
     logger.info("Final output: ");
     for (List<Tweet> userTweetList : tweetByUser.values()) {
-      for(Tweet tweet: userTweetList) {
+      for (Tweet tweet : userTweetList) {
         logger.info(tweet.toString());
         tweetList.add(tweet);
 
