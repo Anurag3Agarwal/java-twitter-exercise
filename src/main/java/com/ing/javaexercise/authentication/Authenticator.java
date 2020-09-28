@@ -45,10 +45,6 @@ public class Authenticator {
    */
   public synchronized HttpRequestFactory getAuthorizedHttpRequestFactory()
       throws AuthenticationException {
-//    if (factory != null) {
-//      return factory;
-//    }
-
     factory = createRequestFactory();
     return factory;
   }
@@ -85,7 +81,7 @@ public class Authenticator {
   }
 
   /**
-   * Retrieve the initial temporary tokens required to obtain the acces token
+   * Retrieve the initial temporary tokens required to obtain the access token
    *
    * @param signer The HMAC signer used to cryptographically sign requests to Twitter
    * @return The response containing the temporary tokens
@@ -101,10 +97,10 @@ public class Authenticator {
     try {
       requestTokenResponse = requestToken.execute();
     } catch (IOException e) {
-      throw new AuthenticationException("Unable to aquire temporary token: " + e.getMessage(), e);
+      throw new AuthenticationException("Unable to acquire temporary token: " + e.getMessage(), e);
     }
 
-    logger.info("Aquired temporary token...");
+    logger.info("Acquired temporary token...");
     return requestTokenResponse;
   }
 
@@ -117,10 +113,6 @@ public class Authenticator {
   private String retrievePin(final OAuthAuthorizeTemporaryTokenUrl authorizeUrl)
       throws AuthenticationException {
     String providedPin = null;
-
-
-   // Scanner scanner = new Scanner(System.in);
-    //scanner.useDelimiter(System.lineSeparator());
     try {
       BufferedReader buffReader = new BufferedReader(new InputStreamReader(System.in));
       System.out.println("Go to the following link in your browser:" + authorizeUrl.build());

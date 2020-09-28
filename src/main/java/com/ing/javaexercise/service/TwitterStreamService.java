@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface TwitterStreamService {
 
-List<Tweet> retrieveAndProcessTweets();
+List<Tweet> retrieveAndProcessTweets(String searchString);
 }

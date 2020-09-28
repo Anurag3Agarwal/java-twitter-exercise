@@ -7,10 +7,8 @@ import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.ing.javaexercise.authentication.Authenticator;
 import com.ing.javaexercise.constants.ApplicationConstant;
-import com.ing.javaexercise.model.Author;
 import com.ing.javaexercise.model.Tweet;
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -18,13 +16,10 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Properties;
 import java.util.stream.Collectors;
-import org.apache.commons.io.LineIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,8 +40,6 @@ public class TwitterStreamServiceImpl implements TwitterStreamService {
    */
   private static final int MAX_TWEET_SIZE = 100;
 
-
-
   /**
    * Max interval of time
    */
@@ -55,62 +48,51 @@ public class TwitterStreamServiceImpl implements TwitterStreamService {
   /**
    * Map of tweets group by User
    */
-  private Map<String, List<Tweet>> tweetByUser = new HashMap<>();
+  private volatile Map<String, List<Tweet>> tweetByUser;
 
-  @Value("${searchString}")
-  private String host;
+  /**
+   * Tweet list to be returned
+   */
+  private volatile List<Tweet> tweetList = new ArrayList<>();
+
 
   @Override
-  public List<Tweet> retrieveAndProcessTweets() {
+  public List<Tweet> retrieveAndProcessTweets(String searchString) {
     HttpRequestFactory httpRequestFactory = authenticator.getAuthorizedHttpRequestFactory();
     try {
-      setMapOfTweetsSortedByUserChronologycally(parseInputStreamToTweetList(httpRequestFactory));
+      setMapOfTweetsSortedByUserChronologycally(retrieveAndParseTweetsFromTwitterStream(httpRequestFactory, searchString));
     } catch (IOException e) {
-      e.printStackTrace();
+      logger.error(e.getMessage());
     }
-
     printSortedTweets();
-
 //to do
-    return null;
+    return tweetList;
   }
 
 
-  private List<Tweet> parseInputStreamToTweetList(HttpRequestFactory httpRequestFactory) throws IOException {
-    logger.info("Init parseInputStreamToTweetList...");
+  private List<Tweet> retrieveAndParseTweetsFromTwitterStream(HttpRequestFactory httpRequestFactory, String searchString) throws IOException {
+    logger.info("Entering retrieveAndParseTweetsFromTwitterStream...");
     List<Tweet> tweetList = new ArrayList<>();
-
-
     HttpRequest request = httpRequestFactory.buildGetRequest(
-        new GenericUrl(ApplicationConstant.ENDPOINT_STREAM_TWITTER.concat("?track=").concat(host)));
-
+        new GenericUrl(ApplicationConstant.ENDPOINT_STREAM_TWITTER.concat("?track=").concat(searchString)));
     HttpResponse response = request.execute();
-
     InputStream in = response.getContent();
-
     ObjectMapper mapper = new ObjectMapper();
     DateFormat dateFormat = new SimpleDateFormat("EEE MMM dd HH:mm:ss Z yyyy", Locale.ENGLISH);
     mapper.setDateFormat(dateFormat);
-
     BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-//    LineIterator lineIterator = new LineIterator(
-//        new BufferedReader(new InputStreamReader(in), 1024 * 1024 * 10));
     String line = reader.readLine();
-
     int countTweets = 0;
     long startTime = System.currentTimeMillis();
-
     while (line != null && countTweets < MAX_TWEET_SIZE &&
         (System.currentTimeMillis() - startTime < MAX_TIME_INTERVAL)) {
       // Parse tweet and add to the list
       tweetList.add(mapper.readValue(line, Tweet.class));
-
       line = reader.readLine();
       countTweets++;
       logger.info("Number of Input Tweets: " + countTweets);
     }
-
-    logger.info("End parseInputStreamToTweetList!!");
+    logger.info("Exiting retrieveAndParseTweetsFromTwitterStream!!");
     return tweetList;
   }
 
@@ -120,35 +102,32 @@ public class TwitterStreamServiceImpl implements TwitterStreamService {
    * @param tweetList Generated Tweet List.
    */
   private void setMapOfTweetsSortedByUserChronologycally(List<Tweet> tweetList) {
-    logger.info("Init setMapOfTweetsSortedByUserChronologycally...");
+    logger.info("Entering setMapOfTweetsSortedByUserChronologycally...");
     tweetByUser = tweetList.stream()
-       // .sorted(Comparator.nullsLast((p1,p2) -> p1.getAuthor().getCreationDate().compareTo(p2.getAuthor().getCreationDate())))
-        .sorted(Comparator.nullsLast((p1,p2)-> p1.getAuthor().compareTo(p2.getAuthor())))
+        .sorted(Comparator.nullsLast((p1, p2) -> p1.getAuthor().compareTo(p2.getAuthor())))
+        .filter(p -> null != p.getAuthor().getUserId())
         .collect(Collectors.groupingBy(
             p -> p.getAuthor().getUserId()));
-
-
-
 
     for (List<Tweet> userTweetList : tweetByUser.values()) {
       userTweetList.sort((p1, p2) -> p1.compareTo(p2));
     }
 
-    logger.info("End setMapOfTweetsSortedByUserChronologycally!!");
+    logger.info("Exiting setMapOfTweetsSortedByUserChronologycally!!");
   }
 
   private void printSortedTweets() {
-    logger.info("Init printSortedTweets...");
-
-
-    logger.info("Final tweet list: ");
+    logger.info("Entering printSortedTweets...");
+    logger.info("Final output: ");
     for (List<Tweet> userTweetList : tweetByUser.values()) {
       for(Tweet tweet: userTweetList) {
         logger.info(tweet.toString());
+        tweetList.add(tweet);
+
       }
     }
 
-    logger.info("End printSortedTweets!!");
+    logger.info("Exiting printSortedTweets!!");
   }
 
 }
