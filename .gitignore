@@ -1,0 +1,7 @@
+.idea
+.eclipse
+.idea/
+.eclipse/
+
+# Maven files #
+target/
