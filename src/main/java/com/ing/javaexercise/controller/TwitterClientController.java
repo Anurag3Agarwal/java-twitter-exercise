@@ -1,8 +1,8 @@
 package com.ing.javaexercise.controller;
 
+
 import com.ing.javaexercise.model.Tweet;
 import com.ing.javaexercise.service.TwitterStreamService;
-import com.ing.javaexercise.service.TwitterStreamServiceImpl;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
