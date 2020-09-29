@@ -51,8 +51,8 @@ public class Author implements Comparable{
 
   @Override
   public int compareTo(Object o) {
-    Author author = (Author)o;
-return nullSafeDateComparator.compare(this.getCreationDate(),author.getCreationDate());
+    Author author = (Author) o;
+    return nullSafeDateComparator.compare(this.getCreationDate(), author.getCreationDate());
 
   }
 }
