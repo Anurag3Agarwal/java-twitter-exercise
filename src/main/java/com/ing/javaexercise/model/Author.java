@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.ing.javaexercise.constants.ApplicationConstant;
 import java.util.Comparator;
 import java.util.Date;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Author implements Comparable{
 
