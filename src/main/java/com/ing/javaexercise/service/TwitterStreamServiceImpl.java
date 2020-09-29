@@ -7,6 +7,7 @@ import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpResponse;
 import com.ing.javaexercise.authentication.Authenticator;
 import com.ing.javaexercise.constants.ApplicationConstant;
+import com.ing.javaexercise.exception.TweetNotFoundException;
 import com.ing.javaexercise.model.Tweet;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -24,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 
 @Service
@@ -54,17 +56,28 @@ public class TwitterStreamServiceImpl implements TwitterStreamService {
    */
   private volatile List<Tweet> tweetList = new ArrayList<>();
 
+  /**
+   * @param searchString: The string for which the tweets are to be streamed
+   * @return tweetList: List of tweets fetch and sorted as per business requirement
+   */
 
   @Override
-  public List<Tweet> retrieveAndProcessTweets(String searchString) {
+  public List<Tweet> retrieveAndProcessTweets(String searchString) throws IOException,TweetNotFoundException {
     HttpRequestFactory httpRequestFactory = authenticator.getAuthorizedHttpRequestFactory();
     try {
-      setMapOfTweetsSortedByUserChronologycally(
+      setMapOfTweetsSortedAndGroupedByUserChronologically(
           retrieveAndParseTweetsFromTwitterStream(httpRequestFactory, searchString));
+      if (!CollectionUtils.isEmpty(tweetByUser)) {
+        printFinalSortedTweets();
+      } else {
+        throw new TweetNotFoundException("No Tweets fetched for the search String");
+      }
+
     } catch (IOException e) {
       logger.error(e.getMessage());
+      throw e;
     }
-    printSortedTweets();
+
 //to do
     return tweetList;
   }
@@ -103,27 +116,28 @@ public class TwitterStreamServiceImpl implements TwitterStreamService {
    *
    * @param tweetList Generated Tweet List.
    */
-  private void setMapOfTweetsSortedByUserChronologycally(List<Tweet> tweetList) {
-    logger.debug("Entering setMapOfTweetsSortedByUserChronologycally...");
+  private void setMapOfTweetsSortedAndGroupedByUserChronologically(List<Tweet> tweetList) {
+    logger.debug("Entering setMapOfTweetsSortedAndGroupedByUserChronologically...");
     tweetByUser = tweetList.stream()
-        .sorted(Comparator.nullsLast((p1, p2) -> p1.getAuthor().compareTo(p2.getAuthor())))
-        .filter(p -> null != p.getAuthor().getUserId())
+        .sorted(Comparator
+            .nullsLast((tweet, atweet) -> tweet.getAuthor().compareTo(atweet.getAuthor())))
+        .filter(tweet -> null != tweet.getAuthor().getUserId())
         .collect(Collectors.groupingBy(
-            p -> p.getAuthor().getUserId()));
+            tweet -> tweet.getAuthor().getUserId()));
 
     for (List<Tweet> userTweetList : tweetByUser.values()) {
-      userTweetList.sort((p1, p2) -> p1.compareTo(p2));
+      userTweetList.sort((Comparator.naturalOrder()));
     }
 
-    logger.debug("Exiting setMapOfTweetsSortedByUserChronologycally!!");
+    logger.debug("Exiting setMapOfTweetsSortedAndGroupedByUserChronologically!!");
   }
 
   /**
    * Method to print the output to the console
    */
 
-  private void printSortedTweets() {
-    logger.debug("Entering printSortedTweets...");
+  private void printFinalSortedTweets() {
+    logger.debug("Entering printFinalSortedTweets...");
     logger.info("Final output: ");
     for (List<Tweet> userTweetList : tweetByUser.values()) {
       for (Tweet tweet : userTweetList) {
@@ -133,7 +147,7 @@ public class TwitterStreamServiceImpl implements TwitterStreamService {
       }
     }
 
-    logger.info("Exiting printSortedTweets!!");
+    logger.info("Exiting printFinalSortedTweets!!");
   }
 
 }

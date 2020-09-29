@@ -1,8 +1,10 @@
 package com.ing.javaexercise.controller;
 
 
+import com.ing.javaexercise.exception.TweetNotFoundException;
 import com.ing.javaexercise.model.Tweet;
 import com.ing.javaexercise.service.TwitterStreamService;
+import java.io.IOException;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +34,7 @@ public class TwitterClientController {
 
 
   @GetMapping("tweets")
-  public String fetchTweets(Model model) {
+  public String fetchTweets(Model model) throws IOException, TweetNotFoundException {
     logger.debug("Entering fetchTweets method");
     List<Tweet> tweets = twitterStreamService.retrieveAndProcessTweets(searchString);
     model.addAttribute("tweets", tweets);
