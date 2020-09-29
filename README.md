@@ -19,4 +19,4 @@ Alternatively you can use the [Spring Boot Maven plugin](https://docs.spring.io/
 mvn spring-boot:run
 ```
 
-The sorted detailed output is printed in console logs but you can get a sneak peek in the browser as well.
+The sorted detailed output is printed in console logs but you can get a sneak peek of the tweets in the browser as well.
