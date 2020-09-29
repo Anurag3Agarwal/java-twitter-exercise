@@ -17,6 +17,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -62,7 +63,7 @@ public class TwitterStreamServiceImpl implements TwitterStreamService {
    */
 
   @Override
-  public List<Tweet> retrieveAndProcessTweets(String searchString) throws IOException,TweetNotFoundException {
+  public List<Tweet> retrieveAndProcessTweets(String searchString) throws IOException, TweetNotFoundException {
     HttpRequestFactory httpRequestFactory = authenticator.getAuthorizedHttpRequestFactory();
     try {
       setMapOfTweetsSortedAndGroupedByUserChronologically(
@@ -73,12 +74,11 @@ public class TwitterStreamServiceImpl implements TwitterStreamService {
         throw new TweetNotFoundException("No Tweets fetched for the search String");
       }
 
-    } catch (IOException e) {
-      logger.error(e.getMessage());
-      throw e;
+    } catch (IOException exc) {
+      logger.error(exc.getMessage());
+      throw exc;
     }
 
-//to do
     return tweetList;
   }
 
@@ -123,7 +123,7 @@ public class TwitterStreamServiceImpl implements TwitterStreamService {
             .nullsLast((tweet, atweet) -> tweet.getAuthor().compareTo(atweet.getAuthor())))
         .filter(tweet -> null != tweet.getAuthor().getUserId())
         .collect(Collectors.groupingBy(
-            tweet -> tweet.getAuthor().getUserId()));
+            tweet -> tweet.getAuthor().getUserId(), LinkedHashMap::new, Collectors.toList()));
 
     for (List<Tweet> userTweetList : tweetByUser.values()) {
       userTweetList.sort((Comparator.naturalOrder()));
